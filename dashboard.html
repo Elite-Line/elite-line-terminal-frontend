@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard | Elite-Line Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0a;
+    --panel:#111214;
+    --panel-alt:#161719;
+    --panel-raised:#1a1c1f;
+    --border:rgba(255,255,255,0.08);
+    --border-soft:rgba(255,255,255,0.05);
+    --accent:#00ff88;
+    --accent-dim:rgba(0,255,136,0.12);
+    --accent-dim-border:rgba(0,255,136,0.3);
+    --text:#f2f2f2;
+    --text-dim:#8a8f98;
+    --text-faint:#54585f;
+    --warn:#ffa53d;
+    --warn-dim:rgba(255,165,61,0.12);
+    --danger:#ff5c5c;
+    --danger-dim:rgba(255,92,92,0.12);
+    --radius:12px;
+    --sidebar-w:250px;
+    --font-ui:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    --font-mono:'JetBrains Mono','Courier New',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:var(--font-ui);
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+  }
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;}
+  ::selection{background:var(--accent-dim);color:var(--accent);}
+
+  .icon{width:18px;height:18px;flex-shrink:0;}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    position:fixed;
+    top:0;left:0;bottom:0;
+    width:var(--sidebar-w);
+    background:var(--panel);
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    z-index:1100;
+    transition:transform .25s ease;
+  }
+  .sidebar-brand{
+    display:flex;align-items:center;gap:10px;
+    padding:22px 22px 18px;
+    font-weight:800;font-size:18px;letter-spacing:1px;
+  }
+  .sidebar-brand span{color:var(--accent);}
+  .sidebar-search{
+    margin:0 16px 18px;
+    display:flex;align-items:center;gap:8px;
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:9px 12px;
+    color:var(--text-faint);
+  }
+  .sidebar-search input{
+    background:transparent;border:none;outline:none;color:var(--text);
+    font-size:13px;width:100%;font-family:var(--font-ui);
+  }
+  .sidebar-search input::placeholder{color:var(--text-faint);}
+  .nav-group{padding:0 12px;flex:1;overflow-y:auto;}
+  .nav-link{
+    display:flex;align-items:center;gap:12px;
+    padding:11px 12px;margin-bottom:2px;
+    border-radius:8px;
+    color:var(--text-dim);
+    font-size:14px;font-weight:500;
+    border:1px solid transparent;
+    cursor:pointer;
+  }
+  .nav-link:hover{color:var(--text);background:var(--panel-raised);}
+  .nav-link.active{
+    color:var(--accent);
+    background:var(--accent-dim);
+    border-color:var(--accent-dim-border);
+  }
+  .nav-divider{height:1px;background:var(--border-soft);margin:12px 4px;}
+  .sidebar-footer{
+    padding:14px;
+    border-top:1px solid var(--border);
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .mini-card{
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 12px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .mini-card.balance{border-color:var(--accent-dim-border);background:var(--accent-dim);}
+  .mini-label{font-size:10px;letter-spacing:.06em;color:var(--text-dim);}
+  .mini-card.balance .mini-label{color:var(--accent);opacity:.85;}
+  .mini-value{font-family:var(--font-mono);font-size:14px;font-weight:600;}
+  .mini-card.balance .mini-value{color:var(--accent);}
+  .user-row{
+    display:flex;align-items:center;gap:10px;
+    padding:8px 4px;
+    cursor:pointer;
+    border-radius:8px;
+  }
+  .user-row:hover{background:var(--panel-raised);}
+  .user-avatar{
+    width:32px;height:32px;border-radius:8px;
+    background:var(--accent-dim);
+    color:var(--accent);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:14px;
+    flex-shrink:0;
+  }
+  .user-meta{flex:1;min-width:0;}
+  .user-meta .name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .user-meta .sub{font-size:11px;color:var(--text-faint);}
+
+  /* ---------- Mobile sidebar toggle ---------- */
+  .sidebar-toggle{
+    display:none;
+    position:fixed;top:14px;left:14px;z-index:1200;
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:8px;padding:8px;color:var(--text);
+    cursor:pointer;
+  }
+  .sidebar-overlay{
+    display:none;
+    position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1050;
+  }
+
+  /* ---------- Main ---------- */
+  .app{margin-left:var(--sidebar-w);min-height:100vh;display:flex;flex-direction:column;}
+
+  .topbar{
+    position:sticky;top:0;z-index:900;
+    background:rgba(10,10,10,0.85);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+    padding:16px 32px;
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;flex-wrap:wrap;
+  }
+  .breadcrumb{display:flex;align-items:center;gap:8px;color:var(--text-dim);font-size:14px;}
+  .breadcrumb strong{color:var(--text);font-weight:600;}
+  .topbar-right{display:flex;align-items:center;gap:12px;}
+  .chip{
+    display:flex;align-items:center;gap:8px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px 14px;
+    font-size:13px;color:var(--text-dim);
+  }
+  .balance-chip{
+    display:flex;align-items:center;gap:8px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px 14px;
+    font-size:13px;
+  }
+  .balance-chip .amt{font-family:var(--font-mono);font-weight:700;color:var(--text);}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    border:none;border-radius:8px;
+    padding:10px 18px;
+    font-size:13px;font-weight:700;
+    cursor:pointer;
+    font-family:var(--font-ui);
+  }
+  .btn-accent{background:var(--accent);color:#05130c;}
+  .btn-accent:hover{background:#33ff9e;}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-dim);}
+  .btn-ghost:hover{border-color:var(--danger);color:var(--danger);}
+
+  .main{padding:28px 32px 60px;max-width:1320px;width:100%;margin:0 auto;}
+
+  .page-head{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    margin-bottom:24px;flex-wrap:wrap;gap:12px;
+  }
+  .page-head h1{font-size:28px;font-weight:800;margin-bottom:6px;}
+  .page-head .date{color:var(--text-dim);font-size:13px;}
+  .status-pill{
+    display:flex;align-items:center;gap:8px;
+    padding:7px 14px;border-radius:50px;font-size:12px;font-weight:600;
+    letter-spacing:.03em;
+  }
+  .status-pill.active{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-dim-border);}
+  .status-pill.pending{background:var(--warn-dim);color:var(--warn);border:1px solid rgba(255,165,61,.35);}
+  .status-pill.suspended{background:var(--danger-dim);color:var(--danger);border:1px solid rgba(255,92,92,.35);}
+  .status-dot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+  /* ---------- Stat cards ---------- */
+  .stats-row{
+    display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:18px;margin-bottom:20px;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:22px;
+  }
+  .stat-card{display:flex;flex-direction:column;gap:16px;}
+  .stat-top{display:flex;align-items:center;justify-content:space-between;}
+  .stat-icon-box{
+    width:38px;height:38px;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .stat-icon-box.green{background:var(--accent-dim);color:var(--accent);}
+  .stat-icon-box.blue{background:rgba(90,140,255,.14);color:#7fa4ff;}
+  .stat-icon-box.purple{background:rgba(170,110,255,.14);color:#b98bff;}
+  .stat-caption{font-size:11px;letter-spacing:.06em;color:var(--text-dim);}
+  .stat-main{font-family:var(--font-mono);font-size:30px;font-weight:700;}
+  .stat-sub{font-size:12px;color:var(--text-faint);margin-top:2px;}
+
+  /* ---------- Content grid ---------- */
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:20px;align-items:start;}
+
+  .card-title-row{
+    display:flex;align-items:center;gap:10px;margin-bottom:18px;
+  }
+  .card-title-row .box{
+    width:32px;height:32px;border-radius:8px;
+    background:var(--accent-dim);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .card-title-row h3{font-size:14px;font-weight:700;}
+  .card-title-row .sub{font-size:11px;color:var(--text-faint);margin-top:1px;}
+
+  /* Top up card */
+  .amount-input{
+    display:flex;align-items:center;gap:8px;
+    background:var(--bg);border:1px solid var(--border);
+    border-radius:8px;padding:14px 16px;margin-bottom:14px;
+  }
+  .amount-input span{color:var(--text-faint);font-family:var(--font-mono);font-size:20px;}
+  .amount-input input{
+    flex:1;background:transparent;border:none;outline:none;color:var(--text);
+    font-family:var(--font-mono);font-size:20px;font-weight:600;
+  }
+  .preset-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+  .preset-btn{
+    background:var(--bg);border:1px solid var(--border);color:var(--text-dim);
+    border-radius:7px;padding:9px 0;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .preset-btn:hover,.preset-btn.selected{border-color:var(--accent-dim-border);color:var(--accent);background:var(--accent-dim);}
+  .pay-btn{width:100%;justify-content:center;}
+  .pay-note{display:flex;align-items:center;gap:6px;justify-content:center;margin-top:12px;font-size:11px;color:var(--text-faint);}
+
+  /* Terminal card */
+  .terminal{background:var(--panel-alt);border-radius:9px;overflow:hidden;border:1px solid var(--border-soft);}
+  .terminal-bar{
+    display:flex;align-items:center;gap:8px;
+    padding:11px 14px;background:var(--panel-raised);border-bottom:1px solid var(--border-soft);
+  }
+  .dot{width:9px;height:9px;border-radius:50%;}
+  .dot.red{background:#ff5f57;}.dot.yellow{background:#febc2e;}.dot.green{background:#28c840;}
+  .terminal-title{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);letter-spacing:.03em;margin-left:4px;}
+  .terminal-body{padding:16px;}
+  .term-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:9px 0;border-bottom:1px solid var(--border-soft);
+    font-family:var(--font-mono);font-size:13px;
+  }
+  .term-row:last-child{border-bottom:none;}
+  .term-label{color:var(--text-faint);letter-spacing:.04em;font-size:11px;}
+  .term-value-group{display:flex;align-items:center;gap:8px;}
+  .term-value{font-weight:600;color:var(--text);}
+  .icon-btn{
+    background:transparent;border:none;color:var(--text-faint);cursor:pointer;
+    display:flex;align-items:center;padding:2px;
+  }
+  .icon-btn:hover{color:var(--accent);}
+  .icon-btn .icon{width:14px;height:14px;}
+  .pending-block{padding:6px 2px 2px;text-align:center;}
+  .pending-block .headline{color:var(--warn);font-size:13px;margin-bottom:8px;display:flex;align-items:center;gap:8px;justify-content:center;}
+  .pending-block p{color:var(--text-dim);font-size:12.5px;line-height:1.6;margin-bottom:12px;}
+  .pending-block a{color:var(--accent);font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:6px;}
+
+  /* Quick actions */
+  .qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .qa-btn{
+    display:flex;flex-direction:column;gap:10px;
+    background:var(--panel-alt);border:1px solid var(--border-soft);
+    border-radius:9px;padding:14px;cursor:pointer;
+  }
+  .qa-btn:hover{border-color:var(--accent-dim-border);background:var(--panel-raised);}
+  .qa-icon{
+    width:32px;height:32px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .qa-btn span{font-size:12.5px;font-weight:600;color:var(--text);}
+  .qa-1{background:rgba(90,140,255,.14);color:#7fa4ff;}
+  .qa-2{background:rgba(0,255,136,.14);color:var(--accent);}
+  .qa-3{background:rgba(255,165,61,.14);color:var(--warn);}
+  .qa-4{background:rgba(170,110,255,.14);color:#b98bff;}
+  .qa-5{background:rgba(255,92,140,.14);color:#ff5c8c;}
+  .qa-6{background:rgba(255,140,60,.14);color:#ff8c3c;}
+
+  /* Support banner */
+  .support-banner{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;flex-wrap:wrap;
+    background:linear-gradient(135deg,var(--panel) 0%,var(--panel-alt) 100%);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:20px 24px;
+  }
+  .support-left{display:flex;align-items:center;gap:14px;}
+  .support-icon{
+    width:42px;height:42px;border-radius:10px;
+    background:var(--accent-dim);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .support-left h4{font-size:14px;font-weight:700;margin-bottom:3px;}
+  .support-left p{font-size:12.5px;color:var(--text-dim);}
+  .support-actions{display:flex;gap:10px;}
+  .support-actions .btn-ghost{color:var(--text);}
+
+  /* Focus visibility */
+  a:focus-visible,button:focus-visible,input:focus-visible{
+    outline:2px solid var(--accent);outline-offset:2px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .status-dot{animation:none;}
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:1080px){
+    .stats-row{grid-template-columns:1fr 1fr;}
+    .stats-row .stat-card:first-child{grid-column:span 2;}
+    .grid-3{grid-template-columns:1fr 1fr;}
+    .grid-3 > :nth-child(3){grid-column:span 2;}
+  }
+  @media (max-width:760px){
+    .sidebar{transform:translateX(-100%);}
+    .sidebar.open{transform:translateX(0);}
+    .sidebar-toggle{display:flex;}
+    .sidebar-overlay.show{display:block;}
+    .app{margin-left:0;}
+    .topbar{padding:16px 18px 16px 60px;}
+    .main{padding:20px 18px 40px;}
+    .stats-row{grid-template-columns:1fr;}
+    .stats-row .stat-card:first-child{grid-column:span 1;}
+    .grid-3{grid-template-columns:1fr;}
+    .grid-3 > :nth-child(3){grid-column:span 1;}
+    .qa-grid{grid-template-columns:1fr 1fr;}
+    .support-banner{flex-direction:column;align-items:flex-start;}
+  }
+</style>
+</head>
+<body>
+
+<button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle menu">
+  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">ELITE<span>LINE</span></div>
+
+  <div class="sidebar-search">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" placeholder="Search...">
+  </div>
+
+  <nav class="nav-group">
+    <a href="dashboard.html" class="nav-link active">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Dashboard
+    </a>
+    <a href="sipusers.html" class="nav-link">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      SIP Users
+    </a>
+    <a href="activecalls.html" class="nav-link">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Active Calls
+    </a>
+    <a href="statistics.html" class="nav-link">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Statistics
+    </a>
+    <a href="refills.html" class="nav-link">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Refills
+    </a>
+    <a href="coverage.html" class="nav-link">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      Coverage
+    </a>
+    <a href="plans.html" class="nav-link">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+      Plans
+    </a>
+    <a href="#" class="nav-link">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Users
+    </a>
+    <div class="nav-divider"></div>
+    <a href="https://t.me/SIPCONNECT0" target="_blank" class="nav-link">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      Support
+    </a>
+    <a href="howtouse.html" class="nav-link">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      How To Use
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="mini-card balance">
+      <div>
+        <div class="mini-label">BALANCE</div>
+        <div class="mini-value" id="sbBalance">$0.00</div>
+      </div>
+    </div>
+    <div class="mini-card">
+      <div>
+        <div class="mini-label">SIP SERVER</div>
+        <div class="mini-value" id="sbServer" style="font-size:12px;">—</div>
+      </div>
+    </div>
+    <div class="user-row" id="userRow">
+      <div class="user-avatar" id="userAvatar">U</div>
+      <div class="user-meta">
+        <div class="name" id="userName">Loading...</div>
+        <div class="sub">User account</div>
+      </div>
+      <button class="icon-btn" onclick="logout()" aria-label="Log out">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<div class="app">
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="breadcrumb">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      / <strong>Dashboard</strong>
+    </div>
+    <div class="topbar-right">
+      <a href="https://t.me/SIPCONNECT0" target="_blank" class="chip">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        @SIPCONNECT0
+      </a>
+      <div class="balance-chip">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;color:var(--text-faint);"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Balance: <span class="amt" id="topBalance">$0.00</span>
+      </div>
+      <button class="btn btn-accent" onclick="document.getElementById('topupCard').scrollIntoView({behavior:'smooth'})">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="width:14px;height:14px;"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+        Recharge
+      </button>
+    </div>
+  </div>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <h1>Dashboard</h1>
+        <div class="date" id="todayDate">—</div>
+      </div>
+      <div class="status-pill pending" id="statusBadge">
+        <div class="status-dot"></div>
+        <span id="statusText">PENDING</span>
+      </div>
+    </div>
+
+    <!-- Stat row -->
+    <div class="stats-row">
+      <div class="card stat-card">
+        <div class="stat-top">
+          <div class="stat-icon-box green">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div class="stat-caption">AVAILABLE BALANCE</div>
+        </div>
+        <div>
+          <div class="stat-main" id="balance">$0.00</div>
+          <div class="stat-sub">Account: <span id="accountHandle">—</span></div>
+        </div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-top">
+          <div class="stat-icon-box blue">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </div>
+        </div>
+        <div>
+          <div class="stat-main" id="sipCount">0</div>
+          <div class="stat-sub">SIP Accounts</div>
+        </div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-top">
+          <div class="stat-icon-box purple">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+          </div>
+        </div>
+        <div>
+          <div class="stat-main" id="sipServer" style="font-size:20px;">—</div>
+          <div class="stat-sub">SIP Server IP</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 column grid -->
+    <div class="grid-3">
+      <!-- Top up -->
+      <div class="card" id="topupCard">
+        <div class="card-title-row">
+          <div class="box">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          </div>
+          <div>
+            <h3>Top Up Balance</h3>
+            <div class="sub">Pay with crypto, manually reviewed</div>
+          </div>
+        </div>
+
+        <div class="amount-input">
+          <span>$</span>
+          <input type="number" id="topupAmount" value="0.00" min="1" step="0.01">
+        </div>
+        <div class="preset-grid">
+          <button class="preset-btn" data-amt="50">$50</button>
+          <button class="preset-btn" data-amt="100">$100</button>
+          <button class="preset-btn" data-amt="150">$150</button>
+          <button class="preset-btn" data-amt="200">$200</button>
+          <button class="preset-btn" data-amt="500">$500</button>
+          <button class="preset-btn" data-amt="1000">$1000</button>
+        </div>
+
+        <div class="field" style="margin-bottom:14px;">
+          <label style="display:block;font-size:11px;color:var(--text-dim);letter-spacing:.04em;margin-bottom:6px;">COIN</label>
+          <select id="coinSelect" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px 12px;color:var(--text);font-size:13.5px;font-family:var(--font-mono);outline:none;">
+            <option value="">Loading coins...</option>
+          </select>
+        </div>
+
+        <div id="addressBlock" style="display:none;">
+          <div class="terminal" style="margin-bottom:14px;">
+            <div class="terminal-bar">
+              <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+              <div class="terminal-title">SEND_TO_THIS_ADDRESS</div>
+            </div>
+            <div class="terminal-body">
+              <div class="term-row" style="border-bottom:none;flex-direction:column;align-items:flex-start;gap:8px;">
+                <span class="term-label" id="addressLabel">—</span>
+                <div class="term-value-group" style="width:100%;">
+                  <span class="term-value" id="addressValue" style="word-break:break-all;font-size:12px;">—</span>
+                  <button class="icon-btn" onclick="copyAddress()" aria-label="Copy address">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom:14px;">
+            <label style="display:block;font-size:11px;color:var(--text-dim);letter-spacing:.04em;margin-bottom:6px;">TRANSACTION HASH (after sending)</label>
+            <input type="text" id="txHashInput" placeholder="Paste your transaction hash" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px 12px;color:var(--text);font-size:12.5px;font-family:var(--font-mono);outline:none;">
+          </div>
+
+          <button class="btn btn-accent pay-btn" id="submitPaymentBtn" style="background:var(--danger);color:#fff;">
+            <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="width:14px;height:14px;"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+            Submit Payment for Review
+          </button>
+          <div class="pay-note">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Balance updates after confirmation
+          </div>
+        </div>
+
+        <div id="mySubmissions" style="margin-top:16px;"></div>
+      </div>
+
+      <!-- SIP connection data -->
+      <div class="card">
+        <div class="card-title-row">
+          <div class="box">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <div>
+            <h3>SIP Credentials</h3>
+            <div class="sub">Connection details</div>
+          </div>
+        </div>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+            <div class="terminal-title">SIP_CONNECTION_DATA</div>
+          </div>
+          <div class="terminal-body" id="sipTerminalBody">
+            <!-- filled by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="card">
+        <div class="card-title-row">
+          <div class="box">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </div>
+          <h3>Quick Actions</h3>
+        </div>
+        <div class="qa-grid">
+          <a href="sipusers.html" class="qa-btn">
+            <div class="qa-icon qa-1"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+            <span>SIP Users</span>
+          </a>
+          <a href="activecalls.html" class="qa-btn">
+            <div class="qa-icon qa-2"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            <span>Active Calls</span>
+          </a>
+          <a href="coverage.html" class="qa-btn">
+            <div class="qa-icon qa-3"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+            <span>Coverage</span>
+          </a>
+          <a href="refills.html" class="qa-btn">
+            <div class="qa-icon qa-4"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <span>History</span>
+          </a>
+          <a href="statistics.html" class="qa-btn">
+            <div class="qa-icon qa-5"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+            <span>Statistics</span>
+          </a>
+          <a href="plans.html" class="qa-btn">
+            <div class="qa-icon qa-6"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div>
+            <span>Plans</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Support banner -->
+    <div class="support-banner">
+      <div class="support-left">
+        <div class="support-icon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+        </div>
+        <div>
+          <h4>24/7 Support Available</h4>
+          <p>Our team is ready to help you anytime</p>
+        </div>
+      </div>
+      <div class="support-actions">
+        <a href="https://t.me/SIPCONNECT0" target="_blank" class="btn btn-ghost">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Telegram
+        </a>
+        <a href="#" class="btn btn-ghost" id="whatsappBtn">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          WhatsApp
+        </a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // ---------- Auth check ----------
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (!token) { window.location.href = 'login.html'; }
+
+  // ---------- Sidebar toggle (mobile) ----------
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  document.getElementById('sidebarToggle').addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('show');
+  });
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
+  });
+
+  // ---------- Date ----------
+  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  // ---------- Crypto payment (manual review) ----------
+  // Your backend runs on a different port than Live Server serves this page from,
+  // so API calls need the full address rather than a relative path.
+  const API_BASE = 'https://elite-line-backend.onrender.com';
+
+  let availableAddresses = [];
+
+  async function loadCoinOptions() {
+    const select = document.getElementById('coinSelect');
+    try {
+      const res = await fetch(API_BASE + '/api/payment/crypto/addresses', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      const data = await res.json();
+      availableAddresses = data.addresses || [];
+
+      if (availableAddresses.length === 0) {
+        select.innerHTML = '<option value="">No coins configured yet</option>';
+        return;
+      }
+
+      select.innerHTML = '<option value="">Select a coin...</option>' +
+        availableAddresses.map((a, i) =>
+          `<option value="${i}">${escapeHtml(a.label)}</option>`
+        ).join('');
+
+    } catch (err) {
+      select.innerHTML = '<option value="">Could not load coins</option>';
+    }
+  }
+
+  document.getElementById('coinSelect').addEventListener('change', (e) => {
+    const block = document.getElementById('addressBlock');
+    if (e.target.value === '') {
+      block.style.display = 'none';
+      return;
+    }
+    const addr = availableAddresses[Number(e.target.value)];
+    document.getElementById('addressLabel').textContent = `${addr.coin}_${addr.network}_ADDRESS`;
+    document.getElementById('addressValue').textContent = addr.address;
+    block.style.display = 'block';
+  });
+
+  function copyAddress() {
+    const value = document.getElementById('addressValue').textContent;
+    navigator.clipboard.writeText(value).then(() => alert('Address copied!'));
+  }
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  // ---------- Preset amount buttons ----------
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('topupAmount').value = Number(btn.dataset.amt).toFixed(2);
+    });
+  });
+
+  document.getElementById('submitPaymentBtn').addEventListener('click', async () => {
+    const amt = Number(document.getElementById('topupAmount').value);
+    const coinIndex = document.getElementById('coinSelect').value;
+    const txHash = document.getElementById('txHashInput').value.trim();
+    const btn = document.getElementById('submitPaymentBtn');
+
+    if (!amt || amt < 1) {
+      alert('Enter the amount (in USD) you sent, at least $1');
+      return;
+    }
+    if (coinIndex === '') {
+      alert('Select a coin first');
+      return;
+    }
+    if (!txHash) {
+      alert('Paste your transaction hash');
+      return;
+    }
+
+    const addr = availableAddresses[Number(coinIndex)];
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    try {
+      const res = await fetch(API_BASE + '/api/payment/crypto/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({
+          coin: addr.coin,
+          network: addr.network,
+          amount: amt,
+          txHash
+        })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Could not submit payment');
+      }
+
+      document.getElementById('txHashInput').value = '';
+      alert('Payment submitted! Your balance will update once it\'s reviewed.');
+      loadMySubmissions();
+
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  });
+
+  async function loadMySubmissions() {
+    const container = document.getElementById('mySubmissions');
+    try {
+      const res = await fetch(API_BASE + '/api/payment/crypto/my-transactions', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      const data = await res.json();
+      const txns = data.transactions || [];
+
+      if (txns.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      const statusClass = { submitted: 'pending', credited: 'active', rejected: 'suspended' };
+
+      container.innerHTML = `
+        <div style="font-size:11px;color:var(--text-faint);letter-spacing:.05em;margin-bottom:8px;">RECENT SUBMISSIONS</div>
+        ${txns.slice(0, 4).map(t => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-soft);font-size:12.5px;">
+            <span>${escapeHtml(t.coin)} · $${Number(t.amount).toFixed(2)}</span>
+            <span class="pill ${statusClass[t.status] || 'pending'}" style="font-size:10px;">${t.status.toUpperCase()}</span>
+          </div>
+        `).join('')}
+      `;
+    } catch (err) {
+      // Silent fail — not critical to page function
+    }
+  }
+
+  loadCoinOptions();
+  loadMySubmissions();
+
+  // TODO: replace with your real WhatsApp support link
+  document.getElementById('whatsappBtn').addEventListener('click', (e) => {
+    if (document.getElementById('whatsappBtn').getAttribute('href') === '#') {
+      e.preventDefault();
+      alert('Add your WhatsApp support link to the whatsappBtn href in dashboard.html');
+    }
+  });
+
+  // ---------- Load dashboard ----------
+  function loadDashboard() {
+    const name = user.name || 'User';
+    document.getElementById('userName').textContent = name;
+    document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+    document.getElementById('accountHandle').textContent = name;
+
+    const balanceVal = (user.balance || 0).toFixed(2);
+    document.getElementById('balance').textContent = '$' + balanceVal;
+    document.getElementById('topBalance').textContent = '$' + balanceVal;
+    document.getElementById('sbBalance').textContent = '$' + balanceVal;
+
+    document.getElementById('sipCount').textContent = user.sipUsername ? '1' : '0';
+
+    const serverIp = user.sipServerIp || '—';
+    document.getElementById('sipServer').textContent = serverIp;
+    document.getElementById('sbServer').textContent = serverIp;
+
+    const status = user.status || 'pending';
+    const statusBadge = document.getElementById('statusBadge');
+    statusBadge.className = 'status-pill ' + status;
+    document.getElementById('statusText').textContent = status.toUpperCase();
+
+    loadSipTerminal(status);
+    refreshBalanceFromServer();
+  }
+
+  // Balance in localStorage is only as fresh as the last login. Pull the live
+  // value from the server so a completed crypto top-up shows up without
+  // requiring the user to log out and back in.
+  async function refreshBalanceFromServer() {
+    try {
+      const res = await fetch(API_BASE + '/api/user/balance', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (typeof data.balance !== 'number') return;
+
+      const balanceVal = data.balance.toFixed(2);
+      document.getElementById('balance').textContent = '$' + balanceVal;
+      document.getElementById('topBalance').textContent = '$' + balanceVal;
+      document.getElementById('sbBalance').textContent = '$' + balanceVal;
+
+      // Keep localStorage in sync so other pages/tabs see the fresh value too
+      user.balance = data.balance;
+      localStorage.setItem('user', JSON.stringify(user));
+    } catch (err) {
+      // Silent fail is fine here — the page still works with the cached balance
+      console.warn('Could not refresh balance from server:', err);
+    }
+  }
+
+  function loadSipTerminal(status) {
+    const body = document.getElementById('sipTerminalBody');
+
+    if (status === 'active' && user.sipUsername) {
+      body.innerHTML = `
+        <div class="term-row">
+          <span class="term-label">SIP_USERNAME</span>
+          <div class="term-value-group">
+            <span class="term-value">${user.sipUsername}</span>
+            <button class="icon-btn" onclick="copyText('${user.sipUsername}')" aria-label="Copy username">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="term-row">
+          <span class="term-label">SIP_DOMAIN</span>
+          <div class="term-value-group">
+            <span class="term-value">${user.sipDomain || '—'}</span>
+            <button class="icon-btn" onclick="copyText('${user.sipDomain || ''}')" aria-label="Copy domain">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="term-row">
+          <span class="term-label">SIP_PASSWORD</span>
+          <div class="term-value-group">
+            <span class="term-value" id="sipPasswordValue">••••••••</span>
+            <button class="icon-btn" onclick="toggleSipPassword()" aria-label="Show password">
+              <svg class="icon" id="sipEyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <button class="icon-btn" onclick="copyText('${user.sipPassword || ''}')" aria-label="Copy password">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+        </div>
+      `;
+    } else {
+      body.innerHTML = `
+        <div class="pending-block">
+          <div class="headline">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Account pending activation
+          </div>
+          <p>Our team will activate your account and send your SIP credentials shortly.</p>
+          <a href="https://t.me/SIPCONNECT0" target="_blank">
+            Contact @SIPCONNECT0 to speed up activation
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+      `;
+    }
+  }
+
+  let sipPasswordVisible = false;
+  function toggleSipPassword() {
+    sipPasswordVisible = !sipPasswordVisible;
+    const valueEl = document.getElementById('sipPasswordValue');
+    const eyeIcon = document.getElementById('sipEyeIcon');
+    if (!valueEl) return;
+
+    if (sipPasswordVisible) {
+      valueEl.textContent = user.sipPassword || '—';
+      eyeIcon.innerHTML = '<path d="M17 3.34a10 10 0 0 1 4.9 5.66 10 10 0 0 1-4.9 5.66M9.9 4.24A10 10 0 0 0 1 12a10 10 0 0 0 8.9 7.76"/><line x1="1" y1="1" x2="23" y2="23"/>';
+    } else {
+      valueEl.textContent = '••••••••';
+      eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    }
+  }
+
+  function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert('Copied to clipboard!');
+    });
+  }
+
+  function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = 'index.html';
+  }
+
+  loadDashboard();
+</script>
+
+</body>
+</html>

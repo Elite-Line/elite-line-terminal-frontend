@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | Elite-Line Terminal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0a0a0a;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 20px;
+        }
+
+        /* Logo */
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-text {
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: 3px;
+        }
+
+        .logo-text span {
+            color: #00ff88;
+        }
+
+        .logo-sub {
+            font-size: 10px;
+            letter-spacing: 5px;
+            color: #666;
+            display: block;
+            margin-top: 5px;
+        }
+
+        /* Card */
+        .card {
+            background: #111;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 12px;
+            padding: 40px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .card-subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px 16px;
+            background: #0a0a0a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 15px;
+            transition: border-color 0.3s ease;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: #00ff88;
+        }
+
+        select option {
+            background: #111;
+        }
+
+        /* Button */
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: #00ff88;
+            color: #0a0a0a;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: #00cc6a;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Messages */
+        .error-msg {
+            background: rgba(255, 50, 50, 0.1);
+            border: 1px solid rgba(255, 50, 50, 0.3);
+            color: #ff5555;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-msg {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            color: #00ff88;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        /* Footer */
+        .card-footer {
+            text-align: center;
+            margin-top: 25px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .card-footer a {
+            color: #00ff88;
+            text-decoration: none;
+        }
+
+        .card-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Account Type Cards */
+        .plan-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .plan-option {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .plan-option:hover {
+            border-color: #00ff88;
+        }
+
+        .plan-option.selected {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .plan-option h4 {
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .plan-option p {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .plan-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #0a0a0a;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Back link */
+        .back-link {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .back-link a {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .back-link a:hover {
+            color: #00ff88;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- Logo -->
+        <div class="logo">
+            <div class="logo-text">ELITE<span>LINE</span></div>
+            <span class="logo-sub">TERMINAL</span>
+        </div>
+
+        <!-- Back Link -->
+        <div class="back-link">
+            <a href="index.html">← Back to Home</a>
+        </div>
+
+        <!-- Register Card -->
+        <div class="card">
+            <h2 class="card-title">Create Account</h2>
+            <p class="card-subtitle">Join Elite-Line Terminal and start making calls worldwide</p>
+
+            <!-- Messages -->
+            <div class="error-msg" id="errorMsg"></div>
+            <div class="success-msg" id="successMsg"></div>
+
+            <!-- Form -->
+            <form id="registerForm">
+
+                <!-- Full Name -->
+                <div class="form-group">
+                    <label>FULL NAME</label>
+                    <input 
+                        type="text" 
+                        id="name" 
+                        placeholder="Enter your full name"
+                        required
+                    >
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label>EMAIL ADDRESS</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        placeholder="Enter your email"
+                        required
+                    >
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label>PASSWORD</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        placeholder="Minimum 6 characters"
+                        required
+                        minlength="6"
+                    >
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="form-group">
+                    <label>CONFIRM PASSWORD</label>
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
+                        placeholder="Repeat your password"
+                        required
+                    >
+                </div>
+
+                <!-- Account Type -->
+                <div class="form-group">
+                    <label>ACCOUNT TYPE</label>
+                    <div class="plan-grid">
+                        <div class="plan-option selected" onclick="selectPlan('individual', this)">
+                            <div class="plan-icon">👤</div>
+                            <h4>Individual</h4>
+                            <p>Personal use</p>
+                        </div>
+                        <div class="plan-option" onclick="selectPlan('reseller', this)">
+                            <div class="plan-icon">🤝</div>
+                            <h4>Reseller</h4>
+                            <p>Resell to others</p>
+                        </div>
+                        <div class="plan-option" onclick="selectPlan('company', this)">
+                            <div class="plan-icon">🏢</div>
+                            <h4>Company</h4>
+                            <p>Business use</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn" id="submitBtn">
+                    CREATE ACCOUNT
+                </button>
+
+            </form>
+
+            <!-- Footer -->
+            <div class="card-footer">
+                Already have an account? 
+                <a href="login.html">Sign In</a>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Selected account type
+        let selectedPlan = 'individual'
+
+        // Select account type function
+        function selectPlan(plan, element) {
+            // Remove selected from all
+            document.querySelectorAll('.plan-option').forEach(el => {
+                el.classList.remove('selected')
+            })
+            // Add selected to clicked
+            element.classList.add('selected')
+            selectedPlan = plan
+        }
+
+        // Handle form submission
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault()
+
+            // Get values
+            const name = document.getElementById('name').value.trim()
+            const email = document.getElementById('email').value.trim()
+            const password = document.getElementById('password').value
+            const confirmPassword = document.getElementById('confirmPassword').value
+
+            // Hide messages
+            document.getElementById('errorMsg').style.display = 'none'
+            document.getElementById('successMsg').style.display = 'none'
+
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                showError('Passwords do not match!')
+                return
+            }
+
+            // Show loading
+            const btn = document.getElementById('submitBtn')
+            btn.disabled = true
+            btn.innerHTML = '<span class="spinner"></span> Creating Account...'
+
+            try {
+                // Send request to backend
+                const response = await fetch('https://elite-line-backend.onrender.com/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name,
+                        email,
+                        password,
+                        accountType: selectedPlan
+                    })
+                })
+
+                const data = await response.json()
+
+                if (response.ok) {
+                    // Save token
+                    localStorage.setItem('token', data.token)
+                    localStorage.setItem('user', JSON.stringify(data.user))
+
+                    // Show success
+                    showSuccess('Account created successfully! Redirecting...')
+
+                    // Redirect to dashboard
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html'
+                    }, 2000)
+
+                } else {
+                    showError(data.error || 'Registration failed')
+                    btn.disabled = false
+                    btn.innerHTML = 'CREATE ACCOUNT'
+                }
+
+            } catch (error) {
+                showError('Cannot connect to server. Please try again.')
+                btn.disabled = false
+                btn.innerHTML = 'CREATE ACCOUNT'
+            }
+        })
+
+        // Show error message
+        function showError(message) {
+            const errorMsg = document.getElementById('errorMsg')
+            errorMsg.textContent = message
+            errorMsg.style.display = 'block'
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const successMsg = document.getElementById('successMsg')
+            successMsg.textContent = message
+            successMsg.style.display = 'block'
+        }
+    </script>
+
+</body>
+</html>

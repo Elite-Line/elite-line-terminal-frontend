@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin | Elite-Line Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0a;--panel:#111214;--panel-alt:#161719;--panel-raised:#1a1c1f;
+    --border:rgba(255,255,255,0.08);--border-soft:rgba(255,255,255,0.05);
+    --accent:#00ff88;--accent-dim:rgba(0,255,136,0.12);--accent-dim-border:rgba(0,255,136,0.3);
+    --text:#f2f2f2;--text-dim:#8a8f98;--text-faint:#54585f;
+    --warn:#ffa53d;--warn-dim:rgba(255,165,61,0.12);
+    --danger:#ff5c5c;--danger-dim:rgba(255,92,92,0.12);
+    --radius:12px;--sidebar-w:230px;
+    --font-ui:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    --font-mono:'JetBrains Mono','Courier New',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:var(--font-ui);background:var(--bg);color:var(--text);min-height:100vh;}
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;}
+  .icon{width:18px;height:18px;flex-shrink:0;}
+
+  .sidebar{
+    position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);
+    background:var(--panel);border-right:1px solid var(--border);
+    display:flex;flex-direction:column;z-index:1100;
+  }
+  .sidebar-brand{display:flex;align-items:center;gap:6px;padding:22px 22px 24px;font-weight:800;font-size:18px;letter-spacing:1px;}
+  .sidebar-brand span{color:var(--accent);}
+  .sidebar-brand .tag{
+    font-family:var(--font-mono);font-size:9px;font-weight:600;color:var(--danger);
+    background:var(--danger-dim);border:1px solid rgba(255,92,92,.35);
+    border-radius:5px;padding:2px 6px;margin-left:4px;letter-spacing:.05em;
+  }
+  .nav-group{padding:0 12px;flex:1;}
+  .nav-link{
+    display:flex;align-items:center;gap:12px;padding:11px 12px;margin-bottom:2px;
+    border-radius:8px;color:var(--text-dim);font-size:14px;font-weight:500;cursor:pointer;border:1px solid transparent;
+  }
+  .nav-link:hover{color:var(--text);background:var(--panel-raised);}
+  .nav-link.active{color:var(--accent);background:var(--accent-dim);border-color:var(--accent-dim-border);}
+  .sidebar-footer{padding:14px;border-top:1px solid var(--border);}
+  .user-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-radius:8px;}
+  .user-avatar{width:32px;height:32px;border-radius:8px;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;}
+  .user-meta .name{font-size:13px;font-weight:600;}
+  .user-meta .sub{font-size:11px;color:var(--text-faint);}
+  .icon-btn{background:transparent;border:none;color:var(--text-faint);cursor:pointer;display:flex;align-items:center;padding:2px;}
+  .icon-btn:hover{color:var(--accent);}
+
+  .app{margin-left:var(--sidebar-w);min-height:100vh;}
+  .topbar{
+    position:sticky;top:0;z-index:900;background:rgba(10,10,10,.85);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);padding:16px 32px;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  }
+  .search-box{
+    display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);
+    border-radius:8px;padding:9px 14px;min-width:260px;
+  }
+  .search-box input{background:transparent;border:none;outline:none;color:var(--text);font-size:13px;width:100%;}
+  .filter-tabs{display:flex;gap:6px;}
+  .filter-tab{
+    background:transparent;border:1px solid var(--border);color:var(--text-dim);
+    border-radius:7px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;
+  }
+  .filter-tab.active{color:var(--accent);border-color:var(--accent-dim-border);background:var(--accent-dim);}
+
+  .main{padding:28px 32px 60px;max-width:1320px;margin:0 auto;}
+  .page-head h1{font-size:26px;font-weight:800;margin-bottom:4px;}
+  .page-head p{color:var(--text-dim);font-size:13px;margin-bottom:24px;}
+
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+  .stat-caption{font-size:11px;letter-spacing:.06em;color:var(--text-dim);margin-bottom:10px;}
+  .stat-main{font-family:var(--font-mono);font-size:26px;font-weight:700;}
+  .stat-main.warn{color:var(--warn);}
+  .stat-main.green{color:var(--accent);}
+  .stat-main.danger{color:var(--danger);}
+
+  .table-card{padding:0;overflow:hidden;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{
+    text-align:left;font-size:11px;letter-spacing:.05em;color:var(--text-faint);
+    padding:14px 18px;border-bottom:1px solid var(--border);background:var(--panel-alt);
+  }
+  tbody td{padding:14px 18px;border-bottom:1px solid var(--border-soft);font-size:13.5px;vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--panel-raised);}
+  .cell-user .name{font-weight:600;}
+  .cell-user .email{font-size:12px;color:var(--text-faint);}
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:50px;
+    font-size:11px;font-weight:700;letter-spacing:.03em;
+  }
+  .pill.active{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-dim-border);}
+  .pill.pending{background:var(--warn-dim);color:var(--warn);border:1px solid rgba(255,165,61,.35);}
+  .pill.suspended{background:var(--danger-dim);color:var(--danger);border:1px solid rgba(255,92,92,.35);}
+  .balance-cell{font-family:var(--font-mono);font-weight:600;}
+  .row-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .action-btn{
+    border:1px solid var(--border);background:transparent;color:var(--text-dim);
+    border-radius:6px;padding:6px 11px;font-size:12px;font-weight:600;cursor:pointer;
+  }
+  .action-btn.green{color:var(--accent);border-color:var(--accent-dim-border);}
+  .action-btn.green:hover{background:var(--accent-dim);}
+  .action-btn.warn{color:var(--warn);border-color:rgba(255,165,61,.35);}
+  .action-btn.warn:hover{background:var(--warn-dim);}
+  .action-btn.danger{color:var(--danger);border-color:rgba(255,92,92,.35);}
+  .action-btn.danger:hover{background:var(--danger-dim);}
+  .empty-state{padding:50px 20px;text-align:center;color:var(--text-dim);font-size:13.5px;}
+
+  /* Modal */
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;
+    align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{
+    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+    padding:26px;width:100%;max-width:400px;
+  }
+  .modal h3{font-size:16px;font-weight:700;margin-bottom:4px;}
+  .modal .sub{font-size:12.5px;color:var(--text-dim);margin-bottom:18px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:11px;color:var(--text-dim);letter-spacing:.04em;margin-bottom:6px;}
+  .field input,.field select{
+    width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;
+    padding:10px 12px;color:var(--text);font-size:13.5px;font-family:var(--font-mono);outline:none;
+  }
+  .field input:focus,.field select:focus{border-color:var(--accent-dim-border);}
+  .modal-actions{display:flex;gap:10px;margin-top:20px;}
+  .btn{flex:1;border:none;border-radius:8px;padding:11px 0;font-size:13px;font-weight:700;cursor:pointer;}
+  .btn-accent{background:var(--accent);color:#05130c;}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-dim);}
+
+  .toast{
+    position:fixed;bottom:24px;right:24px;background:var(--panel);border:1px solid var(--accent-dim-border);
+    color:var(--text);padding:14px 18px;border-radius:9px;font-size:13px;z-index:3000;
+    display:none;box-shadow:0 8px 24px rgba(0,0,0,.4);
+  }
+  .toast.error{border-color:rgba(255,92,92,.4);}
+
+  a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  @media (max-width:900px){
+    .sidebar{transform:translateX(-100%);}
+    .app{margin-left:0;}
+    .stats-row{grid-template-columns:1fr 1fr;}
+    table thead{display:none;}
+    tbody tr{display:block;border-bottom:1px solid var(--border);padding:14px 0;}
+    tbody td{display:flex;justify-content:space-between;padding:6px 18px;border:none;}
+    tbody td::before{content:attr(data-label);color:var(--text-faint);font-size:11px;}
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">ELITE<span>LINE</span><span class="tag">ADMIN</span></div>
+  <nav class="nav-group">
+    <a href="admin.html" class="nav-link active">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Overview
+    </a>
+    <a href="admin.html" class="nav-link">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Users
+    </a>
+    <a href="#" class="nav-link" id="paymentsNavLink">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Payments
+      <span id="paymentsBadge" style="margin-left:auto;display:none;background:var(--warn);color:#1a0f00;font-size:10px;font-weight:800;border-radius:50px;padding:2px 7px;"></span>
+    </a>
+    <a href="#" class="nav-link" id="plansNavLink">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+      Plans
+    </a>
+    <a href="#" class="nav-link" id="coverageNavLink">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      Coverage
+    </a>
+    <a href="dashboard.html" class="nav-link">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Back to Dashboard
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-row">
+      <div class="user-avatar" id="adminAvatar">A</div>
+      <div class="user-meta">
+        <div class="name" id="adminName">Loading...</div>
+        <div class="sub">Administrator</div>
+      </div>
+      <button class="icon-btn" onclick="logout()" aria-label="Log out" style="margin-left:auto;">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<div class="app">
+  <div class="topbar">
+    <div class="search-box">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" placeholder="Search by name or email...">
+    </div>
+    <div class="filter-tabs" id="filterTabs">
+      <button class="filter-tab active" data-status="">All</button>
+      <button class="filter-tab" data-status="pending">Pending</button>
+      <button class="filter-tab" data-status="active">Active</button>
+      <button class="filter-tab" data-status="suspended">Suspended</button>
+    </div>
+  </div>
+
+  <main class="main">
+    <div id="usersView">
+      <div class="page-head">
+        <h1>User Management</h1>
+        <p>Activate accounts, adjust balances, and manage account status</p>
+      </div>
+
+      <div class="stats-row">
+        <div class="card">
+          <div class="stat-caption">TOTAL USERS</div>
+          <div class="stat-main" id="statTotal">—</div>
+        </div>
+        <div class="card">
+          <div class="stat-caption">PENDING</div>
+          <div class="stat-main warn" id="statPending">—</div>
+        </div>
+        <div class="card">
+          <div class="stat-caption">ACTIVE</div>
+          <div class="stat-main green" id="statActive">—</div>
+        </div>
+        <div class="card">
+          <div class="stat-caption">SUSPENDED</div>
+          <div class="stat-main danger" id="statSuspended">—</div>
+        </div>
+      </div>
+
+      <div class="card table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Balance</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <!-- filled by JS -->
+          </tbody>
+        </table>
+        <div class="empty-state" id="emptyState" style="display:none;">No users match this view.</div>
+      </div>
+    </div>
+
+    <div id="paymentsView" style="display:none;">
+      <div class="page-head">
+        <h1>Payments</h1>
+        <p>Manually submitted crypto payments. Check each transaction hash on a block explorer, then credit or reject it.</p>
+      </div>
+
+      <div class="stats-row">
+        <div class="card">
+          <div class="stat-caption">AWAITING REVIEW</div>
+          <div class="stat-main warn" id="statAwaitingCredit">—</div>
+        </div>
+        <div class="card">
+          <div class="stat-caption">CREDITED</div>
+          <div class="stat-main green" id="statCredited">—</div>
+        </div>
+        <div class="card">
+          <div class="stat-caption">REJECTED</div>
+          <div class="stat-main danger" id="statFailed">—</div>
+        </div>
+        <div class="card">
+          <div class="stat-caption">TOTAL SUBMISSIONS</div>
+          <div class="stat-main" id="statInProgress">—</div>
+        </div>
+      </div>
+
+      <div class="card table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Coin / Network</th>
+              <th>Tx Hash</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="paymentsTableBody">
+            <!-- filled by JS -->
+          </tbody>
+        </table>
+        <div class="empty-state" id="paymentsEmptyState" style="display:none;">No payments yet.</div>
+      </div>
+    </div>
+
+    <div id="plansView" style="display:none;">
+      <div class="page-head">
+        <h1>Plans</h1>
+        <p>Manage subscription plans and the per-channel add-on price.</p>
+      </div>
+
+      <div class="grid-3" style="grid-template-columns:1fr 1fr;margin-bottom:20px;">
+        <div class="card">
+          <div class="card-title-row">
+            <h3>Channel Add-on Price</h3>
+          </div>
+          <div class="field">
+            <label>PRICE PER CHANNEL ($)</label>
+            <input type="number" id="channelPriceInput" min="0" step="0.01" placeholder="5.00">
+          </div>
+          <button class="btn btn-accent" style="width:100%;" onclick="saveChannelPrice()">Save</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title-row">
+            <h3>Add a New Plan</h3>
+          </div>
+          <div class="field">
+            <label>NAME</label>
+            <input type="text" id="newPlanName" placeholder="e.g. 2-Week Unlimited">
+          </div>
+          <div class="field">
+            <label>DURATION (DAYS)</label>
+            <input type="number" id="newPlanDuration" min="1" placeholder="14">
+          </div>
+          <div class="field">
+            <label>PRICE ($)</label>
+            <input type="number" id="newPlanPrice" min="0" step="0.01" placeholder="350">
+          </div>
+          <button class="btn btn-accent" style="width:100%;" onclick="createPlan()">Add Plan</button>
+        </div>
+      </div>
+
+      <div class="card table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Duration</th>
+              <th>Price</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="plansTableBody">
+            <!-- filled by JS -->
+          </tbody>
+        </table>
+        <div class="empty-state" id="plansEmptyState" style="display:none;">No plans created yet.</div>
+      </div>
+    </div>
+
+    <div id="coverageView" style="display:none;">
+      <div class="page-head">
+        <h1>Coverage</h1>
+        <p>Manage which countries are included in unlimited plans, and note any excluded/premium destinations.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title-row">
+          <h3>Add a Destination</h3>
+        </div>
+        <div class="grid-3" style="grid-template-columns:2fr 1fr 2fr;gap:12px;align-items:end;">
+          <div class="field" style="margin-bottom:0;">
+            <label>COUNTRY</label>
+            <input type="text" id="newDestCountry" placeholder="e.g. United States">
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>STATUS</label>
+            <select id="newDestIncluded">
+              <option value="true">Included</option>
+              <option value="false">Excluded</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>NOTE (optional)</label>
+            <input type="text" id="newDestNote" placeholder="e.g. Mobile only">
+          </div>
+        </div>
+        <button class="btn btn-accent" style="width:100%;margin-top:14px;" onclick="createDestination()">Add Destination</button>
+      </div>
+
+      <div class="card table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Country</th>
+              <th>Status</th>
+              <th>Note</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="destinationsTableBody">
+            <!-- filled by JS -->
+          </tbody>
+        </table>
+        <div class="empty-state" id="destinationsEmptyState" style="display:none;">No destinations added yet.</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+
+<!-- Activate Modal -->
+<div class="modal-overlay" id="activateModal">
+  <div class="modal">
+    <h3>Activate Account</h3>
+    <div class="sub" id="activateModalSub">Assign SIP credentials to activate this user.</div>
+    <div class="field">
+      <label>SIP USERNAME</label>
+      <input type="text" id="sipUsernameInput" placeholder="e.g. el_10234">
+    </div>
+    <div class="field">
+      <label>SIP PASSWORD</label>
+      <input type="text" id="sipPasswordInput" placeholder="e.g. a temporary secret">
+    </div>
+    <div class="field">
+      <label>SIP DOMAIN</label>
+      <input type="text" id="sipDomainInput" placeholder="e.g. sip.elitelineterminal.com">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('activateModal')">Cancel</button>
+      <button class="btn btn-accent" onclick="submitActivate()">Activate</button>
+    </div>
+  </div>
+</div>
+
+<!-- Balance Modal -->
+<div class="modal-overlay" id="balanceModal">
+  <div class="modal">
+    <h3>Adjust Balance</h3>
+    <div class="sub" id="balanceModalSub">Update this user's account balance.</div>
+    <div class="field">
+      <label>MODE</label>
+      <select id="balanceModeInput">
+        <option value="add">Add to balance</option>
+        <option value="subtract">Subtract from balance</option>
+        <option value="set">Set balance to</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>AMOUNT ($)</label>
+      <input type="number" id="balanceAmountInput" min="0" step="0.01" placeholder="0.00">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('balanceModal')">Cancel</button>
+      <button class="btn btn-accent" onclick="submitBalance()">Update</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const token = localStorage.getItem('token');
+  const authedUser = JSON.parse(localStorage.getItem('user') || '{}');
+  if (!token) { window.location.href = 'login.html'; }
+
+  let allUsers = [];
+  let activeFilter = '';
+  let searchTerm = '';
+  let targetUserId = null;
+
+  document.getElementById('adminName').textContent = authedUser.name || 'Admin';
+  document.getElementById('adminAvatar').textContent = (authedUser.name || 'A').charAt(0).toUpperCase();
+
+  // ---------- View switching ----------
+  function hideAllViews() {
+    document.getElementById('usersView').style.display = 'none';
+    document.getElementById('paymentsView').style.display = 'none';
+    document.getElementById('plansView').style.display = 'none';
+    document.getElementById('coverageView').style.display = 'none';
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  }
+
+  document.getElementById('paymentsNavLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    hideAllViews();
+    document.getElementById('paymentsView').style.display = 'block';
+    document.getElementById('paymentsNavLink').classList.add('active');
+    loadPayments();
+  });
+
+  document.getElementById('plansNavLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    hideAllViews();
+    document.getElementById('plansView').style.display = 'block';
+    document.getElementById('plansNavLink').classList.add('active');
+    loadPlansAdmin();
+  });
+
+  document.getElementById('coverageNavLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    hideAllViews();
+    document.getElementById('coverageView').style.display = 'block';
+    document.getElementById('coverageNavLink').classList.add('active');
+    loadDestinations();
+  });
+
+  // ---------- API helper ----------
+  // Your backend runs on a different port than Live Server serves this page from,
+  // so API calls need the full address rather than a relative path.
+  const API_BASE = 'https://elite-line-backend.onrender.com';
+
+  async function apiFetch(path, options = {}) {
+    const res = await fetch(API_BASE + path, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token,
+        ...(options.headers || {})
+      }
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.error || 'Request failed');
+    }
+    return data;
+  }
+
+  function showToast(message, isError = false) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast' + (isError ? ' error' : '');
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 3200);
+  }
+
+  // ---------- Load users ----------
+  async function loadUsers() {
+    try {
+      const data = await apiFetch('/api/admin/users');
+      allUsers = data.users || [];
+      renderStats();
+      renderTable();
+    } catch (err) {
+      if (err.message.includes('Admins only')) {
+        document.querySelector('.main').innerHTML =
+          '<div class="empty-state">You do not have admin access.</div>';
+      } else {
+        showToast(err.message, true);
+      }
+    }
+  }
+
+  function renderStats() {
+    document.getElementById('statTotal').textContent = allUsers.length;
+    document.getElementById('statPending').textContent = allUsers.filter(u => u.status === 'pending').length;
+    document.getElementById('statActive').textContent = allUsers.filter(u => u.status === 'active').length;
+    document.getElementById('statSuspended').textContent = allUsers.filter(u => u.status === 'suspended').length;
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('usersTableBody');
+    const emptyState = document.getElementById('emptyState');
+
+    let filtered = allUsers;
+    if (activeFilter) {
+      filtered = filtered.filter(u => u.status === activeFilter);
+    }
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      filtered = filtered.filter(u =>
+        (u.name || '').toLowerCase().includes(q) ||
+        (u.email || '').toLowerCase().includes(q)
+      );
+    }
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    tbody.innerHTML = filtered.map(u => `
+      <tr>
+        <td data-label="User">
+          <div class="cell-user">
+            <div class="name">${escapeHtml(u.name)}</div>
+            <div class="email">${escapeHtml(u.email)}</div>
+          </div>
+        </td>
+        <td data-label="Type">${escapeHtml(u.accountType || 'individual')}</td>
+        <td data-label="Status"><span class="pill ${u.status}">${u.status.toUpperCase()}</span></td>
+        <td data-label="Balance" class="balance-cell">$${Number(u.balance || 0).toFixed(2)}</td>
+        <td data-label="Actions">
+          <div class="row-actions">
+            ${u.status !== 'active' ? `<button class="action-btn green" onclick="openActivateModal('${u._id}','${escapeAttr(u.name)}')">Activate</button>` : ''}
+            ${u.status === 'suspended' ? `<button class="action-btn green" onclick="reactivate('${u._id}')">Reactivate</button>` : ''}
+            ${u.status !== 'suspended' ? `<button class="action-btn warn" onclick="suspend('${u._id}')">Suspend</button>` : ''}
+            <button class="action-btn" onclick="openBalanceModal('${u._id}','${escapeAttr(u.name)}')">Balance</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+  function escapeAttr(str) {
+    return String(str || '').replace(/'/g, "\\'");
+  }
+
+  // ---------- Filters ----------
+  document.getElementById('filterTabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter-tab');
+    if (!btn) return;
+    document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.status;
+    renderTable();
+  });
+
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    searchTerm = e.target.value;
+    renderTable();
+  });
+
+  // ---------- Activate modal ----------
+  function openActivateModal(userId, name) {
+    targetUserId = userId;
+    document.getElementById('activateModalSub').textContent = `Assign SIP credentials for ${name}.`;
+    document.getElementById('sipUsernameInput').value = '';
+    document.getElementById('sipPasswordInput').value = '';
+    document.getElementById('sipDomainInput').value = '';
+    document.getElementById('activateModal').classList.add('show');
+  }
+
+  async function submitActivate() {
+    const sipUsername = document.getElementById('sipUsernameInput').value.trim();
+    const sipPassword = document.getElementById('sipPasswordInput').value.trim();
+    const sipDomain = document.getElementById('sipDomainInput').value.trim();
+
+    if (!sipUsername || !sipPassword || !sipDomain) {
+      showToast('All three SIP fields are required', true);
+      return;
+    }
+
+    try {
+      await apiFetch(`/api/admin/users/${targetUserId}/activate`, {
+        method: 'PUT',
+        body: JSON.stringify({ sipUsername, sipPassword, sipDomain })
+      });
+      closeModal('activateModal');
+      showToast('Account activated');
+      loadUsers();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  // ---------- Balance modal ----------
+  function openBalanceModal(userId, name) {
+    targetUserId = userId;
+    document.getElementById('balanceModalSub').textContent = `Update balance for ${name}.`;
+    document.getElementById('balanceAmountInput').value = '';
+    document.getElementById('balanceModeInput').value = 'add';
+    document.getElementById('balanceModal').classList.add('show');
+  }
+
+  async function submitBalance() {
+    const mode = document.getElementById('balanceModeInput').value;
+    const amount = document.getElementById('balanceAmountInput').value;
+
+    if (amount === '' || Number(amount) < 0) {
+      showToast('Enter a valid amount', true);
+      return;
+    }
+
+    try {
+      await apiFetch(`/api/admin/users/${targetUserId}/balance`, {
+        method: 'PUT',
+        body: JSON.stringify({ mode, amount })
+      });
+      closeModal('balanceModal');
+      showToast('Balance updated');
+      loadUsers();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  // ---------- Suspend / Reactivate ----------
+  async function suspend(userId) {
+    if (!confirm('Suspend this account?')) return;
+    try {
+      await apiFetch(`/api/admin/users/${userId}/suspend`, { method: 'PUT' });
+      showToast('Account suspended');
+      loadUsers();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function reactivate(userId) {
+    try {
+      await apiFetch(`/api/admin/users/${userId}/reactivate`, { method: 'PUT' });
+      showToast('Account reactivated');
+      loadUsers();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('show');
+  }
+
+  // ---------- Payments ----------
+  let allTransactions = [];
+
+  async function loadPayments() {
+    try {
+      const data = await apiFetch('/api/admin/transactions');
+      allTransactions = data.transactions || [];
+      renderPaymentsStats();
+      renderPaymentsTable();
+      refreshPaymentsBadge();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  function renderPaymentsStats() {
+    document.getElementById('statAwaitingCredit').textContent =
+      allTransactions.filter(t => t.status === 'submitted').length;
+    document.getElementById('statCredited').textContent =
+      allTransactions.filter(t => t.status === 'credited').length;
+    document.getElementById('statFailed').textContent =
+      allTransactions.filter(t => t.status === 'rejected').length;
+    document.getElementById('statInProgress').textContent =
+      allTransactions.length;
+  }
+
+  // Lightweight badge on the sidebar so an admin notices new payments without
+  // having to click into the Payments view first.
+  async function refreshPaymentsBadge() {
+    try {
+      const data = allTransactions.length
+        ? { transactions: allTransactions }
+        : (await apiFetch('/api/admin/transactions?status=submitted')).transactions;
+      const list = Array.isArray(data) ? data : (data.transactions || []);
+      const count = list.filter(t => t.status === 'submitted').length;
+
+      const badge = document.getElementById('paymentsBadge');
+      if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    } catch (err) {
+      // Non-critical — badge just won't show if this fails
+    }
+  }
+
+  function renderPaymentsTable() {
+    const tbody = document.getElementById('paymentsTableBody');
+    const emptyState = document.getElementById('paymentsEmptyState');
+
+    if (allTransactions.length === 0) {
+      tbody.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    tbody.innerHTML = allTransactions.map(t => {
+      const hashShort = t.txHash ? t.txHash.slice(0, 8) + '...' + t.txHash.slice(-6) : '—';
+      const hashHtml = t.explorerUrl
+        ? `<a href="${t.explorerUrl}" target="_blank" style="color:var(--accent);font-family:var(--font-mono);font-size:11px;">${escapeHtml(hashShort)}</a>`
+        : `<span style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);">${escapeHtml(hashShort)}</span>`;
+
+      let actions = '<span style="color:var(--text-faint);font-size:12px;">—</span>';
+      if (t.status === 'submitted') {
+        actions = `
+          <button class="action-btn green" onclick="creditTransaction('${t._id}')">Credit</button>
+          <button class="action-btn danger" onclick="rejectTransaction('${t._id}')">Reject</button>
+        `;
+      }
+
+      return `
+        <tr>
+          <td data-label="Customer">
+            <div class="cell-user">
+              <div class="name">${escapeHtml(t.user?.name || 'Unknown')}</div>
+              <div class="email">${escapeHtml(t.user?.email || '')}</div>
+            </div>
+          </td>
+          <td data-label="Coin / Network">${escapeHtml(t.coin)} (${escapeHtml(t.network)})</td>
+          <td data-label="Tx Hash">${hashHtml}</td>
+          <td data-label="Amount" class="balance-cell">$${Number(t.amount).toFixed(2)}</td>
+          <td data-label="Status"><span class="pill ${paymentPillClass(t.status)}">${t.status.toUpperCase()}</span></td>
+          <td data-label="Date">${new Date(t.createdAt).toLocaleDateString()}</td>
+          <td data-label="Actions"><div class="row-actions">${actions}</div></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function paymentPillClass(status) {
+    if (status === 'credited') return 'active';
+    if (status === 'submitted') return 'pending';
+    return 'suspended';
+  }
+
+  async function creditTransaction(txnId) {
+    if (!confirm('Credit this payment to the customer\'s balance? Make sure you\'ve checked the transaction hash first — this can\'t be undone.')) return;
+    try {
+      await apiFetch(`/api/admin/transactions/${txnId}/credit`, { method: 'PUT' });
+      showToast('Balance credited');
+      loadPayments();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function rejectTransaction(txnId) {
+    const reason = prompt('Reason for rejecting this payment (optional):') || '';
+    try {
+      await apiFetch(`/api/admin/transactions/${txnId}/reject`, {
+        method: 'PUT',
+        body: JSON.stringify({ reason })
+      });
+      showToast('Payment rejected');
+      loadPayments();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  // ---------- Plans management ----------
+  let allPlans = [];
+
+  async function loadPlansAdmin() {
+    try {
+      const [plansData, priceData] = await Promise.all([
+        apiFetch('/api/admin/plans'),
+        apiFetch('/api/admin/settings/channel-price')
+      ]);
+      allPlans = plansData.plans || [];
+      document.getElementById('channelPriceInput').value = priceData.pricePerChannel.toFixed(2);
+      renderPlansTable();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  function renderPlansTable() {
+    const tbody = document.getElementById('plansTableBody');
+    const emptyState = document.getElementById('plansEmptyState');
+
+    if (allPlans.length === 0) {
+      tbody.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    tbody.innerHTML = allPlans.map(p => `
+      <tr>
+        <td data-label="Name"><div class="cell-user"><div class="name">${escapeHtml(p.name)}</div></div></td>
+        <td data-label="Duration">${p.durationDays} days</td>
+        <td data-label="Price" class="balance-cell">$${p.price.toFixed(2)}</td>
+        <td data-label="Status"><span class="pill ${p.active ? 'active' : 'suspended'}">${p.active ? 'ACTIVE' : 'HIDDEN'}</span></td>
+        <td data-label="Actions">
+          <div class="row-actions">
+            <button class="action-btn ${p.active ? 'warn' : 'green'}" onclick="togglePlanActive('${p._id}', ${!p.active})">${p.active ? 'Hide' : 'Unhide'}</button>
+            <button class="action-btn danger" onclick="deletePlan('${p._id}')">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function createPlan() {
+    const name = document.getElementById('newPlanName').value.trim();
+    const durationDays = document.getElementById('newPlanDuration').value;
+    const price = document.getElementById('newPlanPrice').value;
+
+    if (!name || !durationDays || !price) {
+      showToast('Fill in name, duration, and price', true);
+      return;
+    }
+
+    try {
+      await apiFetch('/api/admin/plans', {
+        method: 'POST',
+        body: JSON.stringify({ name, durationDays, price })
+      });
+      showToast('Plan added');
+      document.getElementById('newPlanName').value = '';
+      document.getElementById('newPlanDuration').value = '';
+      document.getElementById('newPlanPrice').value = '';
+      loadPlansAdmin();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function togglePlanActive(planId, makeActive) {
+    try {
+      await apiFetch(`/api/admin/plans/${planId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ active: makeActive })
+      });
+      showToast(makeActive ? 'Plan unhidden' : 'Plan hidden from customers');
+      loadPlansAdmin();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function deletePlan(planId) {
+    if (!confirm('Delete this plan? Past purchases keep their own record, so this is safe, but the plan will no longer be purchasable.')) return;
+    try {
+      await apiFetch(`/api/admin/plans/${planId}`, { method: 'DELETE' });
+      showToast('Plan deleted');
+      loadPlansAdmin();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function saveChannelPrice() {
+    const price = document.getElementById('channelPriceInput').value;
+    if (!price || Number(price) < 0) {
+      showToast('Enter a valid price', true);
+      return;
+    }
+    try {
+      await apiFetch('/api/admin/settings/channel-price', {
+        method: 'PUT',
+        body: JSON.stringify({ pricePerChannel: price })
+      });
+      showToast('Channel price updated');
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  // ---------- Coverage management ----------
+  let allDestinations = [];
+
+  async function loadDestinations() {
+    try {
+      const data = await apiFetch('/api/admin/destinations');
+      allDestinations = data.destinations || [];
+      renderDestinationsTable();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  function renderDestinationsTable() {
+    const tbody = document.getElementById('destinationsTableBody');
+    const emptyState = document.getElementById('destinationsEmptyState');
+
+    if (allDestinations.length === 0) {
+      tbody.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    tbody.innerHTML = allDestinations.map(d => `
+      <tr>
+        <td data-label="Country"><div class="cell-user"><div class="name">${escapeHtml(d.country)}</div></div></td>
+        <td data-label="Status"><span class="pill ${d.included ? 'active' : 'suspended'}">${d.included ? 'INCLUDED' : 'EXCLUDED'}</span></td>
+        <td data-label="Note">${escapeHtml(d.note || '—')}</td>
+        <td data-label="Actions">
+          <div class="row-actions">
+            <button class="action-btn ${d.included ? 'warn' : 'green'}" onclick="toggleDestinationIncluded('${d._id}', ${!d.included})">${d.included ? 'Mark Excluded' : 'Mark Included'}</button>
+            <button class="action-btn danger" onclick="deleteDestination('${d._id}')">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function createDestination() {
+    const country = document.getElementById('newDestCountry').value.trim();
+    const included = document.getElementById('newDestIncluded').value === 'true';
+    const note = document.getElementById('newDestNote').value.trim();
+
+    if (!country) {
+      showToast('Enter a country name', true);
+      return;
+    }
+
+    try {
+      await apiFetch('/api/admin/destinations', {
+        method: 'POST',
+        body: JSON.stringify({ country, included, note })
+      });
+      showToast('Destination added');
+      document.getElementById('newDestCountry').value = '';
+      document.getElementById('newDestNote').value = '';
+      loadDestinations();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function toggleDestinationIncluded(id, makeIncluded) {
+    try {
+      await apiFetch(`/api/admin/destinations/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ included: makeIncluded })
+      });
+      showToast(makeIncluded ? 'Marked as included' : 'Marked as excluded');
+      loadDestinations();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function deleteDestination(id) {
+    if (!confirm('Delete this destination?')) return;
+    try {
+      await apiFetch(`/api/admin/destinations/${id}`, { method: 'DELETE' });
+      showToast('Destination deleted');
+      loadDestinations();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = 'index.html';
+  }
+
+  loadUsers();
+  refreshPaymentsBadge();
+</script>
+
+</body>
+</html>
